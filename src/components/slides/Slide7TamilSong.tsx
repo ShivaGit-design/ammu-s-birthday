@@ -119,7 +119,7 @@ export const Slide7TamilSong: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 py-16 select-none z-10 text-center">
+    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-3 sm:px-6 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none z-10 text-center overflow-x-hidden">
       
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[650px] h-[350px] sm:h-[650px] rounded-full bg-gradient-to-tr from-sky-500/15 via-blue-700/10 to-transparent blur-[140px] pointer-events-none" />
@@ -144,7 +144,7 @@ export const Slide7TamilSong: React.FC = () => {
       <div className="relative max-w-md w-full glass-card rounded-3xl p-5 sm:p-7 border border-sky-400/30 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
         
         {/* Spinning Vinyl Record Visualizer */}
-        <div className="relative w-36 h-36 sm:w-44 sm:h-44 mx-auto mb-5 rounded-full bg-gradient-to-tr from-[#0b1436] via-[#152763] to-[#070e28] border-4 border-sky-400/30 shadow-[0_0_40px_rgba(112,161,255,0.4)] flex items-center justify-center">
+        <div className="relative w-32 h-32 xs:w-36 xs:h-36 sm:w-44 sm:h-44 mx-auto mb-4 sm:mb-5 rounded-full bg-gradient-to-tr from-[#0b1436] via-[#152763] to-[#070e28] border-4 border-sky-400/30 shadow-[0_0_40px_rgba(112,161,255,0.4)] flex items-center justify-center">
           
           {/* Subtle Grooves on Vinyl */}
           <div className="absolute inset-2 rounded-full border border-white/10" />

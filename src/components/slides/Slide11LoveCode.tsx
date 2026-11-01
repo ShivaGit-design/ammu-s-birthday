@@ -82,7 +82,7 @@ export const Slide11LoveCode: React.FC<Slide11LoveCodeProps> = ({ onReplay }) =>
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 py-16 select-none z-10 text-center overflow-hidden">
+    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-3 sm:px-6 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none z-10 text-center overflow-x-hidden">
       
       {/* Deep Midnight Blue Glowing Nebula */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[750px] h-[380px] sm:h-[750px] rounded-full bg-gradient-to-tr from-sky-400/20 via-blue-600/15 to-indigo-950/40 blur-[150px] pointer-events-none" />

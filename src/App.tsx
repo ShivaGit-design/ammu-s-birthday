@@ -3,6 +3,7 @@ import { BackgroundEffects } from './components/BackgroundEffects';
 import { CinematicNavigation } from './components/CinematicNavigation';
 import { MusicPlayer } from './components/MusicPlayer';
 import { ShareMessageModal } from './components/ShareMessageModal';
+import { AutoplayWelcomeModal } from './components/AutoplayWelcomeModal';
 
 // 11 Cinematic Slides
 import { Slide1Opening } from './components/slides/Slide1Opening';
@@ -16,40 +17,62 @@ import { Slide8ReasonsILoveYou } from './components/slides/Slide8ReasonsILoveYou
 import { Slide9OurUniverse } from './components/slides/Slide9OurUniverse';
 import { Slide10BirthdaySurprise } from './components/slides/Slide10BirthdaySurprise';
 import { Slide11LoveCode } from './components/slides/Slide11LoveCode';
-import { romanticAudio } from './utils/audio';
+import { romanticAudio, type AudioEngineState } from './utils/audio';
 import { BIRTHDAY_CONFIG } from './config';
 import { getMediaItem } from './utils/mediaStorage';
 
 export const App: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(1);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isAutoplayModalOpen, setIsAutoplayModalOpen] = useState(false);
+  const [audioState, setAudioState] = useState<AudioEngineState>(romanticAudio.getState());
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const totalSlides = 11;
 
-  // Initialize and arm audio for immediate playback on enter
+  // Initialize and attempt Bae song autoplay on page load
   useEffect(() => {
-    getMediaItem('tamil_song').then((item) => {
-      if (item instanceof Blob) {
-        const url = URL.createObjectURL(item);
+    const unsub = romanticAudio.subscribe((st) => {
+      setAudioState(st);
+      if (st.isAutoplayBlocked && !st.isPlaying) {
+        setIsAutoplayModalOpen(true);
+      } else if (st.isPlaying) {
+        setIsAutoplayModalOpen(false);
+      }
+    });
+
+    const initMusicAndAutoplay = async () => {
+      const persistedItem = await getMediaItem('tamil_song');
+      const persistedMeta = await getMediaItem('tamil_song_meta');
+
+      if (persistedItem instanceof Blob) {
+        const url = URL.createObjectURL(persistedItem);
         romanticAudio.setCustomAudio(url, false);
       } else {
         romanticAudio.setCustomAudio(BIRTHDAY_CONFIG.slide7.defaultAudio, false);
       }
-    });
 
-    getMediaItem('tamil_song_meta').then((item) => {
-      if (typeof item === 'string') {
+      if (typeof persistedMeta === 'string') {
         try {
-          const meta = JSON.parse(item);
+          const meta = JSON.parse(persistedMeta);
           if (meta.title) {
             romanticAudio.setTrackInfo(meta.title, meta.artist || "Special Melody for Ammu 💙🌝");
           }
         } catch {
-          // keep default
+          // keep Bae default
         }
       }
-    });
+
+      // Attempt automatic playback
+      const started = await romanticAudio.attemptAutoplay();
+      if (!started) {
+        setIsAutoplayModalOpen(true);
+      }
+    };
+
+    initMusicAndAutoplay();
+
+    return unsub;
   }, []);
 
   const handleNext = useCallback(() => {
@@ -114,9 +137,14 @@ export const App: React.FC = () => {
     setTouchStartY(null);
   };
 
+  const handleWelcomeEnter = () => {
+    setIsAutoplayModalOpen(false);
+    romanticAudio.dismissAutoplayOverlay();
+  };
+
   return (
     <div
-      className="relative w-screen h-screen overflow-hidden bg-[#050818] text-slate-100 selection:bg-sky-400 selection:text-[#050818]"
+      className="relative w-full h-[100dvh] overflow-hidden bg-[#050818] text-slate-100 selection:bg-sky-400 selection:text-[#050818]"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -133,8 +161,8 @@ export const App: React.FC = () => {
         onOpenShare={() => setIsShareOpen(true)}
       />
 
-      {/* Full-Screen Slide Container */}
-      <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scrollbar-none">
+      {/* Full-Screen Scrollable Slide Container with Safe Padding */}
+      <div className="relative w-full h-full overflow-y-auto overflow-x-hidden scrollbar-none overscroll-contain">
         {currentSlide === 1 && <Slide1Opening onEnter={handleNext} />}
         {currentSlide === 2 && <Slide2CoffeeDate />}
         {currentSlide === 3 && <Slide3FirstPicture />}
@@ -150,8 +178,16 @@ export const App: React.FC = () => {
         {currentSlide === 11 && <Slide11LoveCode onReplay={handleReplay} />}
       </div>
 
-      {/* Persistent Global Floating Music Player */}
+      {/* Persistent Global Floating Music Player (Separated from Navigation) */}
       <MusicPlayer />
+
+      {/* Autoplay Fallback Welcome Overlay (If browser blocks immediate unmuted playback) */}
+      <AutoplayWelcomeModal
+        isOpen={isAutoplayModalOpen}
+        onEnter={handleWelcomeEnter}
+        songTitle={audioState.trackTitle}
+        songArtist={audioState.trackArtist}
+      />
 
       {/* WhatsApp / Social Share Message Modal */}
       <ShareMessageModal

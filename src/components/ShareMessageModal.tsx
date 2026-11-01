@@ -70,7 +70,7 @@ export const ShareMessageModal: React.FC<ShareMessageModalProps> = ({ isOpen, on
         </p>
 
         {/* Message Box */}
-        <div className="relative rounded-2xl bg-white/5 border border-sky-400/25 p-4 sm:p-5 font-handwriting text-lg sm:text-xl text-sky-100 whitespace-pre-line leading-relaxed shadow-inner">
+        <div className="relative rounded-2xl bg-white/5 border border-sky-400/25 p-3.5 sm:p-5 font-handwriting text-base sm:text-xl text-sky-100 whitespace-pre-line leading-relaxed shadow-inner max-h-[35vh] sm:max-h-[45vh] overflow-y-auto overscroll-contain scrollbar-thin">
           {BIRTHDAY_CONFIG.shareMessage}
         </div>
 

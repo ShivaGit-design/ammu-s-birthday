@@ -206,7 +206,7 @@ export const BIRTHDAY_CONFIG = {
     tag: "SCENE 06 • OUR MELODY",
     title: "Our Tamil Love Song 🎵",
     subtitle: "The melody that reminds me of you",
-    defaultAudio: "/audio/Don-Bae.mp3",
+    defaultAudio: "/music/Don - Bae.mp3",
     defaultTitle: "Bae 💙 — DON",
     defaultArtist: "Anirudh Ravichander • Sivakarthikeyan",
     defaultCaption: "Music sounds completely different when you're in love... every romantic beat feels like it was composed only for your smile, Ammu. 🎶💙",
@@ -266,7 +266,7 @@ Happy Birthday in advance, en Ammu! 💙😘🌙`,
   music: {
     title: "Bae 💙 — DON",
     artist: "Anirudh Ravichander • Sivakarthikeyan",
-    src: "/audio/Don-Bae.mp3",
+    src: "/music/Don - Bae.mp3",
     useSynthesizedMelodyAsDefault: false,
   },
 

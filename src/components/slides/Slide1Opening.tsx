@@ -31,7 +31,7 @@ export const Slide1Opening: React.FC<Slide1OpeningProps> = ({ onEnter }) => {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 select-none overflow-hidden text-center z-10">
+    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-4 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none overflow-hidden text-center z-10">
       
       {/* Cinematic Moonlight Glow Halo */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[500px] h-[340px] sm:h-[500px] rounded-full bg-gradient-to-b from-sky-400/20 via-blue-600/10 to-transparent blur-[110px] pointer-events-none animate-pulse-glow" />

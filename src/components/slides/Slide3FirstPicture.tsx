@@ -56,7 +56,7 @@ export const Slide3FirstPicture: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 py-16 select-none z-10 text-center">
+    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-3 sm:px-6 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none z-10 text-center overflow-x-hidden">
       
       {/* Background Soft Deep Blue Aura */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[650px] h-[350px] sm:h-[650px] rounded-full bg-gradient-to-r from-blue-600/15 via-sky-400/20 to-indigo-800/20 blur-[140px] pointer-events-none" />
@@ -91,7 +91,7 @@ export const Slide3FirstPicture: React.FC = () => {
             <div className="absolute bottom-3 right-3 text-sky-300 text-xs select-none pointer-events-none">💙</div>
 
             {/* Photo Viewport */}
-            <div className="relative w-full h-72 sm:h-96 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center group">
+            <div className="relative w-full h-56 xs:h-72 sm:h-96 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center group">
               {photoUrl ? (
                 <div className="relative w-full h-full animate-fadeIn">
                   <img

@@ -1,7 +1,10 @@
 /**
  * Romantic Audio Engine for Ammu's Little Universe 2.0
- * - Supports custom audio track (.mp3, .wav, .m4a / audio element / uploaded Blob)
- * - Has an elegant built-in Web Audio API romantic ambient chime & piano generator
+ * - Supports the official Bae song: "Bae 💙 — DON" (Anirudh Ravichander • Sivakarthikeyan)
+ * - Autoplay handling with graceful browser autoplay block detection & welcome overlay
+ * - Multi-scene continuous playback without interruption or restart
+ * - Supports custom user audio (.mp3, .wav, .m4a / audio element / uploaded Blob) with Object URL memory management
+ * - Built-in Web Audio API romantic ambient chime & piano generator fallback
  * - Exposes currentTime, duration, seek, and volume for custom music players
  * - Sound effects: sparkle chime, pop, candle blow, heart chime
  */
@@ -14,6 +17,9 @@ export interface AudioEngineState {
   duration: number;
   trackTitle: string;
   trackArtist: string;
+  isAutoplayBlocked: boolean;
+  isLoaded: boolean;
+  playbackStatus: 'idle' | 'loading' | 'playing' | 'paused' | 'blocked' | 'error';
 }
 
 class RomanticAudioEngine {
@@ -25,18 +31,30 @@ class RomanticAudioEngine {
   private duration: number = 180;
   private trackTitle: string = "Bae 💙 — DON";
   private trackArtist: string = "Anirudh Ravichander • Sivakarthikeyan";
+  private isAutoplayBlocked: boolean = false;
+  private isLoaded: boolean = false;
+  private playbackStatus: 'idle' | 'loading' | 'playing' | 'paused' | 'blocked' | 'error' = 'idle';
 
   private melodyTimer: number | null = null;
   private timeUpdateTimer: number | null = null;
   private audioElement: HTMLAudioElement | null = null;
   private currentNoteIndex: number = 0;
   private listeners: Set<(state: AudioEngineState) => void> = new Set();
-  private customSrc: string = "/audio/Don-Bae.mp3";
+  private customSrc: string = "/music/Don - Bae.mp3";
+  private currentBlobUrl: string | null = null;
+  private fallbackIndex: number = 0;
+  private defaultAudioSources: string[] = [
+    "/music/Don - Bae.mp3",
+    "/music/Don%20-%20Bae.mp3",
+    "/music/Don-Bae.mp3",
+    "/audio/Don - Bae.mp3",
+    "/audio/Don-Bae.mp3",
+  ];
 
   constructor() {
     if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
       try {
-        this.setCustomAudio("/audio/Don-Bae.mp3", false);
+        this.setCustomAudio(this.defaultAudioSources[0], false);
       } catch (err) {
         console.warn("RomanticAudioEngine audio preload", err);
       }
@@ -53,7 +71,7 @@ class RomanticAudioEngine {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
@@ -72,7 +90,7 @@ class RomanticAudioEngine {
 
   public getState(): AudioEngineState {
     const currentDuration =
-      this.audioElement && !isNaN(this.audioElement.duration)
+      this.audioElement && !isNaN(this.audioElement.duration) && this.audioElement.duration > 0
         ? this.audioElement.duration
         : this.duration;
 
@@ -84,6 +102,9 @@ class RomanticAudioEngine {
       duration: currentDuration,
       trackTitle: this.trackTitle,
       trackArtist: this.trackArtist,
+      isAutoplayBlocked: this.isAutoplayBlocked,
+      isLoaded: this.isLoaded,
+      playbackStatus: this.playbackStatus,
     };
   }
 
@@ -95,7 +116,25 @@ class RomanticAudioEngine {
 
   public setCustomAudio(src: string, autoPlay: boolean = false) {
     if (!src) return;
+
+    // Revoke previous blob URL if different to avoid memory leaks
+    if (this.currentBlobUrl && this.currentBlobUrl !== src) {
+      try {
+        URL.revokeObjectURL(this.currentBlobUrl);
+      } catch {
+        // ignore
+      }
+      this.currentBlobUrl = null;
+    }
+
+    if (src.startsWith('blob:')) {
+      this.currentBlobUrl = src;
+    }
+
     this.customSrc = src;
+    this.playbackStatus = 'loading';
+    this.isLoaded = false;
+    this.fallbackIndex = 0;
 
     if (this.audioElement) {
       this.audioElement.pause();
@@ -105,20 +144,65 @@ class RomanticAudioEngine {
 
     const normalizedSrc = src.startsWith('blob:') || src.startsWith('data:') ? src : encodeURI(decodeURI(src));
     this.audioElement = new Audio(normalizedSrc);
+    this.audioElement.preload = 'auto';
     this.audioElement.loop = true;
     this.audioElement.volume = this.isMuted ? 0 : this.volume;
+
+    this.audioElement.addEventListener('canplay', () => {
+      this.isLoaded = true;
+      if (!this.isPlaying && this.playbackStatus === 'loading') {
+        this.playbackStatus = 'idle';
+      }
+      this.notify();
+    });
 
     this.audioElement.addEventListener('timeupdate', () => {
       if (this.audioElement) {
         this.currentTime = this.audioElement.currentTime;
-        this.duration = this.audioElement.duration || 180;
+        if (!isNaN(this.audioElement.duration) && this.audioElement.duration > 0) {
+          this.duration = this.audioElement.duration;
+        }
         this.notify();
       }
     });
 
     this.audioElement.addEventListener('loadedmetadata', () => {
-      if (this.audioElement) {
-        this.duration = this.audioElement.duration || 180;
+      if (this.audioElement && !isNaN(this.audioElement.duration) && this.audioElement.duration > 0) {
+        this.duration = this.audioElement.duration;
+        this.isLoaded = true;
+        this.notify();
+      }
+    });
+
+    this.audioElement.addEventListener('play', () => {
+      this.isPlaying = true;
+      this.playbackStatus = 'playing';
+      this.isAutoplayBlocked = false;
+      this.notify();
+    });
+
+    this.audioElement.addEventListener('pause', () => {
+      if (this.playbackStatus === 'playing') {
+        this.isPlaying = false;
+        this.playbackStatus = 'paused';
+        this.notify();
+      }
+    });
+
+    // Fallback if one URL scheme (spaces vs %20 vs /audio) fails
+    this.audioElement.addEventListener('error', () => {
+      if (!src.startsWith('blob:') && this.fallbackIndex < this.defaultAudioSources.length - 1) {
+        this.fallbackIndex++;
+        const nextSrc = this.defaultAudioSources[this.fallbackIndex];
+        if (this.audioElement) {
+          this.audioElement.src = nextSrc;
+          this.audioElement.load();
+          if (this.isPlaying) {
+            this.audioElement.play().catch(() => {});
+          }
+        }
+      } else {
+        this.playbackStatus = 'error';
         this.notify();
       }
     });
@@ -130,13 +214,46 @@ class RomanticAudioEngine {
     }
   }
 
-  public startMusic(customSrc?: string) {
+  /**
+   * Attempt autoplay on initial page load.
+   * If browser allows autoplay with sound, it begins immediately.
+   * If browser blocks autoplay (standard on mobile), it marks isAutoplayBlocked = true so the UI displays the welcome overlay.
+   */
+  public async attemptAutoplay(): Promise<boolean> {
     this.initContext();
-    this.isPlaying = true;
+    if (!this.audioElement) {
+      this.setCustomAudio(this.defaultAudioSources[0], false);
+    }
+
+    if (this.audioElement) {
+      try {
+        this.audioElement.volume = this.isMuted ? 0 : this.volume;
+        await this.audioElement.play();
+        this.isPlaying = true;
+        this.isAutoplayBlocked = false;
+        this.playbackStatus = 'playing';
+        this.startTimeTracker();
+        this.notify();
+        return true;
+      } catch {
+        // Autoplay blocked by browser policy
+        this.isPlaying = false;
+        this.isAutoplayBlocked = true;
+        this.playbackStatus = 'blocked';
+        this.notify();
+        return false;
+      }
+    }
+    return false;
+  }
+
+  public async startMusic(customSrc?: string): Promise<boolean> {
+    this.initContext();
+    this.isAutoplayBlocked = false;
 
     if (customSrc && customSrc !== this.customSrc) {
       this.setCustomAudio(customSrc, true);
-      return;
+      return true;
     }
 
     if (this.audioElement) {
@@ -144,20 +261,46 @@ class RomanticAudioEngine {
         window.clearInterval(this.melodyTimer);
         this.melodyTimer = null;
       }
-      this.audioElement.volume = this.isMuted ? 0 : this.volume;
-      this.audioElement.play().catch(() => {
-        this.startSynthesizedMelody();
-      });
-    } else {
-      this.startSynthesizedMelody();
-    }
 
-    this.startTimeTracker();
-    this.notify();
+      this.audioElement.volume = this.isMuted ? 0 : this.volume;
+
+      try {
+        await this.audioElement.play();
+        this.isPlaying = true;
+        this.playbackStatus = 'playing';
+        this.isAutoplayBlocked = false;
+        this.startTimeTracker();
+        this.notify();
+        return true;
+      } catch (err) {
+        // If blocked, record state
+        const isNotAllowed = err instanceof Error && err.name === 'NotAllowedError';
+        if (isNotAllowed) {
+          this.isPlaying = false;
+          this.isAutoplayBlocked = true;
+          this.playbackStatus = 'blocked';
+        } else {
+          // fallback to synthesized romantic melody if audio element fails to decode
+          this.isPlaying = true;
+          this.playbackStatus = 'playing';
+          this.startSynthesizedMelody();
+        }
+        this.notify();
+        return false;
+      }
+    } else {
+      this.isPlaying = true;
+      this.playbackStatus = 'playing';
+      this.startSynthesizedMelody();
+      this.startTimeTracker();
+      this.notify();
+      return true;
+    }
   }
 
   public pauseMusic() {
     this.isPlaying = false;
+    this.playbackStatus = 'paused';
     if (this.audioElement) {
       this.audioElement.pause();
     }
@@ -197,12 +340,17 @@ class RomanticAudioEngine {
   }
 
   public seek(seconds: number) {
-    if (this.audioElement && !isNaN(this.audioElement.duration)) {
+    if (this.audioElement && !isNaN(this.audioElement.duration) && this.audioElement.duration > 0) {
       this.audioElement.currentTime = Math.max(0, Math.min(seconds, this.audioElement.duration));
       this.currentTime = this.audioElement.currentTime;
     } else {
       this.currentTime = seconds;
     }
+    this.notify();
+  }
+
+  public dismissAutoplayOverlay() {
+    this.isAutoplayBlocked = false;
     this.notify();
   }
 
@@ -220,7 +368,7 @@ class RomanticAudioEngine {
   }
 
   /**
-   * Dreamy romantic piano & music-box melody generator
+   * Dreamy romantic piano & music-box melody generator (fallback)
    */
   private startSynthesizedMelody() {
     if (this.melodyTimer) {

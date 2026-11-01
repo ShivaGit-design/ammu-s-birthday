@@ -57,7 +57,7 @@ export const Slide2CoffeeDate: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 py-16 select-none z-10 text-center">
+    <div className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-3 sm:px-6 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none z-10 text-center overflow-x-hidden">
       
       {/* Background Soft Blue Ambient Light */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] sm:w-[600px] h-[380px] sm:h-[600px] rounded-full bg-gradient-to-tr from-sky-500/15 via-blue-700/10 to-indigo-900/20 blur-[130px] pointer-events-none" />
@@ -106,7 +106,7 @@ export const Slide2CoffeeDate: React.FC = () => {
         </div>
 
         {/* Photo Container / Romantic Placeholder */}
-        <div className="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden bg-gradient-to-b from-[#0c163b] to-[#070e29] border border-sky-400/20 shadow-inner flex items-center justify-center group">
+        <div className="relative w-full h-52 xs:h-64 sm:h-72 rounded-2xl overflow-hidden bg-gradient-to-b from-[#0c163b] to-[#070e29] border border-sky-400/20 shadow-inner flex items-center justify-center group">
           {photoUrl ? (
             <div className="relative w-full h-full animate-fadeIn">
               <img

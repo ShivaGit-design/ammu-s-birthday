@@ -160,7 +160,7 @@ export const Slide4MemoriesGallery: React.FC = () => {
 
   return (
     <div
-      className="relative w-full h-full min-h-screen flex flex-col items-center justify-center px-4 py-16 select-none z-10 text-center"
+      className="relative w-full min-h-[100dvh] flex flex-col items-center justify-center px-3 sm:px-6 pt-16 sm:pt-20 pb-36 sm:pb-32 select-none z-10 text-center overflow-x-hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -218,7 +218,7 @@ export const Slide4MemoriesGallery: React.FC = () => {
           </div>
 
           {/* Photo Frame */}
-          <div className="relative w-full h-64 sm:h-72 rounded-2xl overflow-hidden bg-slate-950 border border-sky-400/20 group">
+          <div className="relative w-full h-52 xs:h-64 sm:h-72 rounded-2xl overflow-hidden bg-slate-950 border border-sky-400/20 group">
             {currentCard.imageUrl ? (
               <img
                 src={currentCard.imageUrl}
